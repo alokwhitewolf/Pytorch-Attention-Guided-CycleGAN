@@ -34,11 +34,11 @@ class Gen(nn.Module):
     def __init__(self, input_nc, output_nc, n_resblocks=9, norm=False):
 
         model = [   nn.ReflectionPad2d(3),
-            nn.Conv2d(input_nc, 64, 7),
+            nn.Conv2d(input_nc, 32, 7),
             nn.ReLU(inplace=True) ]
 
         # Downsampling
-        in_features = 64
+        in_features = 32
         out_features = in_features*2
         for _ in range(2):
             model += [  nn.Conv2d(in_features, out_features, 3, stride=2, padding=1),
@@ -60,7 +60,7 @@ class Gen(nn.Module):
 
         # Output layer
         model += [  nn.ReflectionPad2d(3),
-                    nn.Conv2d(64, output_nc, 7),
+                    nn.Conv2d(32, output_nc, 7),
                     nn.Tanh() ]
 
         self.model = nn.Sequential(*model)
@@ -107,4 +107,3 @@ class Attn(nn.Module):
 
 
     def __init__(self):
-        pass
