@@ -62,10 +62,8 @@ class Plotter:
             plt.plot( Xs, Ys, label=attr)
         
         plt.legend()
-        plt.savefig(filename, dpi=1000)
+        plt.savefig(filename)
         plt.close()
 
-def save_checkpoint(state, is_best, filename='checkpoint.pth.tar' , best_filename = 'model_best.pth.tar'):
+def save_checkpoint(state, filename='checkpoint.pth.tar'):
     save(state, filename)
-    if is_best:
-        shutil.copyfile(filename, best_filename)
