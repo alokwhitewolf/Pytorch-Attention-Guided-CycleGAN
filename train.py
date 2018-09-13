@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--LRgen', type=str, default='0.0001', help='learning rate for gen')
 parser.add_argument('--LRdis', type=str, default='0.0001', help='learning rate for dis')
 parser.add_argument('--LRattn', type=str, default='0.0001', help='learning rate fir attention module')
+parser.add_argument('--dataroot', type=str, default='datasets/apple2orange/', help='root of the images')
 parser.add_argument('--resume', type=str, default='None', help='file to resume')
 
 opt = parser.parse_args()
@@ -26,10 +27,12 @@ if torch.cuda.is_available():
     cudaAvailable = True
 Tensor = torch.cuda.FloatTensor if cudaAvailable else torch.Tensor
 
+# Generators and Discriminators
 genA2B = Gen() 
 genB2A = Gen()
 disA = Dis()
 disB = Dis()
+# Attention Modules
 AttnA = Attn()
 AttnB = Attn()
 
@@ -49,6 +52,7 @@ if cudaAvailable:
 
     AttnA.cuda()
     AttnB.cuda()
+
 optG = torch.optim.Adam(itertools.chain(genA2B.parameters(), genB2A.parameters()),lr=opt.LRgen)
 optD = torch.optim.Adam(itertools.chain(disA.parameters(), disB.parameters()),lr=opt.LRdis)
 optAttn = torch.optim.Adam(itertools.chain(AttnA.parameters(), AttnB.parameters()),lr=opt.LRattn)
@@ -60,9 +64,11 @@ attributes =[('AdvLossA', 1),
             ('LossCycleB', 1),
             ('DisLossA', 1),
             ('DisLossB', 1)
-            ]
+            ]       
+# Custom Plotter module
 plotter = Plotter(attributes)
-dataroot = 'datasets/apple2orange/'
+
+dataroot = opt.dataroot
 batchSize = 1
 n_cpu = 4
 size = 256
@@ -107,16 +113,20 @@ lrScheduler = torch.optim.lr_scheduler.MultiStepLR(optAttn, milestones=[30], gam
 passDisWhole = True
 
 for epoch in range(startEpoch, nofEpoch):
-    # reset counters for logging & plotting 
+
+    # Pass only the transformed fg after epoch 30 as per paper
     if epoch >=30:
      passDisWhole = False
     print('epoch -- >', epoch)
+
+    # reset counters for logging & plotting 
     countAdvLossA = 0.0
     countAdvLossB = 0.0
     countLossCycleA = 0.0
     countLossCycleB = 0.0
     countDisLossA = 0.0
     countDisLossB = 0.0
+
     for i, batch in enumerate(dataloader):
         if i % 100 == 0:
             print(i)
