@@ -101,7 +101,7 @@ class Dis(nn.Module):
         x =  self.model(x)
         
         # Average pooling and flatten
-        return F.avg_pool2d(x, x.size()[2:]).view(x.size()[0], -1)
+        return F.sigmoid(F.avg_pool2d(x, x.size()[2:]).view(x.size()[0], -1))
 
 
 class Attn(nn.Module):
