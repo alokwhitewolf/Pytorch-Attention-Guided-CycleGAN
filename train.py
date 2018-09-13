@@ -11,6 +11,16 @@ from torchutils import toZeroThreshold, weights_init, Plotter, save_checkpoint
 import itertools
 from PIL import Image
 
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--LRgen', type=str, default='0.0001', help='learning rate for gen')
+parser.add_argument('--LRdis', type=str, default='0.0001', help='learning rate for dis')
+parser.add_argument('--LRattn', type=str, default='0.0001', help='learning rate fir attention module')
+parser.add_argument('--resume', type=str, default='None', help='file to resume')
+
+opt = parser.parse_args()
+
 cudaAvailable = False
 if torch.cuda.is_available():
     cudaAvailable = True
@@ -39,11 +49,10 @@ if cudaAvailable:
 
     AttnA.cuda()
     AttnB.cuda()
-optG = torch.optim.Adam(itertools.chain(genA2B.parameters(), genB2A.parameters()),lr=0.0001, betas=(0.9, 0.999))
-optD = torch.optim.Adam(itertools.chain(disA.parameters(), disB.parameters()),lr=0.0001, betas=(0.9, 0.999))
-optAttn = torch.optim.Adam(itertools.chain(AttnA.parameters(), AttnB.parameters()),lr=0.0001, betas=(0.9, 0.999))
+optG = torch.optim.Adam(itertools.chain(genA2B.parameters(), genB2A.parameters()),lr=opt.LRgen)
+optD = torch.optim.Adam(itertools.chain(disA.parameters(), disB.parameters()),lr=opt.LRdis)
+optAttn = torch.optim.Adam(itertools.chain(AttnA.parameters(), AttnB.parameters()),lr=opt.LRattn)
 
-lrScheduler = torch.optim.lr_scheduler.MultiStepLR(optAttn, milestones=[30], gamma=0.01)
 # attributes to plot and its freq
 attributes =[('AdvLossA', 1),
             ('AdvLossB', 1),
@@ -72,11 +81,31 @@ nofEpoch = 100
 plotEvery = 1
 saveEvery = 2
 
-resume = False
-if resume:
-    pass
+if opt.resume is not 'None':
+    checkpoint = torch.load(opt.resume)
+    startEpoch = checkpoint['epoch']
+    
+    genA2B.load_state_dict(checkpoint['genA2B'])
+    genB2A.load_state_dict(checkpoint['genB2A'])
+    disA.load_state_dict(checkpoint['disA'])
+    disB.load_state_dict(checkpoint['disB'])
+    AttnA.load_state_dict(checkpoint['AttnA'])
+    AttnB.load_state_dict(checkpoint['AttnB'])
+    optG.load_state_dict(checkpoint['optG'])
+    optD.load_state_dict(checkpoint['optD'])
+    optAttn.load_state_dict(checkpoint['optAttn'])
 
+
+    plotter = checkpoint['plotter']
+    print('resumed from epoch ',startEpoch)
+    del(checkpoint)
+
+
+lrScheduler = torch.optim.lr_scheduler.MultiStepLR(optAttn, milestones=[30], gamma=0.01, last_epoch=startEpoch -1)
+    
+# To pass the whole image or only the fg to the discriminator
 passDisWhole = True
+
 for epoch in range(startEpoch, nofEpoch):
     # reset counters for logging & plotting 
     if epoch >=30:
