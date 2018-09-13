@@ -74,7 +74,7 @@ class Gen(nn.Module):
 class Dis(nn.Module):
     
 
-    def __init__(self, input_nc):
+    def __init__(self, input_nc=3):
         super(Dis, self).__init__()
 
         model = [   nn.Conv2d(input_nc, 64, 4, stride=2, padding=1),
