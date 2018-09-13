@@ -14,9 +14,9 @@ from PIL import Image
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--LRgen', type=str, default='0.0001', help='learning rate for gen')
-parser.add_argument('--LRdis', type=str, default='0.0001', help='learning rate for dis')
-parser.add_argument('--LRattn', type=str, default='0.0001', help='learning rate fir attention module')
+parser.add_argument('--LRgen', type=float, default=1e-4, help='learning rate for gen')
+parser.add_argument('--LRdis', type=float, default=1e-4, help='learning rate for dis')
+parser.add_argument('--LRattn', type=float, default=1e-5, help='learning rate fir attention module')
 parser.add_argument('--dataroot', type=str, default='datasets/apple2orange/', help='root of the images')
 parser.add_argument('--resume', type=str, default='None', help='file to resume')
 
@@ -107,7 +107,7 @@ if opt.resume is not 'None':
     del(checkpoint)
 
 
-lrScheduler = torch.optim.lr_scheduler.MultiStepLR(optAttn, milestones=[30], gamma=0.01, last_epoch=startEpoch -1)
+lrScheduler = torch.optim.lr_scheduler.MultiStepLR(optAttn, milestones=[30], gamma=0.1, last_epoch=startEpoch -1)
     
 # To pass the whole image or only the fg to the discriminator
 passDisWhole = True
