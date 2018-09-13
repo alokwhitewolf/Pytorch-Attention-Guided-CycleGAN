@@ -24,15 +24,16 @@ class ResBlock(nn.Module):
 
         self.model = nn.Sequential(*block)
 
-    def forward(self, x)
+    def forward(self, x):
         return x + self.model(x)
 
 
 class Gen(nn.Module):
     
 
-    def __init__(self, input_nc, output_nc, n_resblocks=9, norm=False):
-
+    def __init__(self, input_nc=3, output_nc=3, n_resblocks=9, norm=False):
+        super(Gen, self).__init__()
+        
         model = [   nn.ReflectionPad2d(3),
             nn.Conv2d(input_nc, 32, 7),
             nn.ReLU(inplace=True) ]
@@ -47,7 +48,7 @@ class Gen(nn.Module):
             out_features = in_features*2
 
         # Residual blocks
-        for _ in range(n_residual_blocks):
+        for _ in range(n_resblocks):
             model += [ResBlock(in_features)]
 
         # Upsampling
@@ -106,4 +107,43 @@ class Dis(nn.Module):
 class Attn(nn.Module):
 
 
-    def __init__(self):
+    def __init__(self, input_nc=3):
+        super(Attn, self).__init__()
+
+        model =  [  nn.Conv2d(3, 32, 7, stride=1, padding=3),
+                    nn.InstanceNorm2d(32),
+                    nn.ReLU(inplace=True) ]
+
+        model += [  nn.Conv2d(32, 64, 3, stride=2, padding=1),
+                    nn.InstanceNorm2d(64),
+                    nn.ReLU(inplace=True) ]
+
+        model += [ResBlock(64, norm=True)]
+
+        model += [nn.UpsamplingNearest2d(scale_factor=2)]
+
+        model += [  nn.Conv2d(64, 64, 3, stride=1, padding=1),
+                    nn.InstanceNorm2d(64),
+                    nn.ReLU(inplace=True) ]
+        
+        # model += [nn.UpsamplingNearest2d(scale_factor=2)]
+
+        model += [  nn.Conv2d(64, 32, 3, stride=1, padding=1),
+                    nn.InstanceNorm2d(32),
+                    nn.ReLU(inplace=True) ]
+
+        model += [  nn.Conv2d(32, 1, 7, stride=1, padding=3),
+                    nn.Sigmoid() ]
+
+        self.model = nn.Sequential(*model)
+
+    def forward(self, x):
+        return self.model(x)
+
+
+
+
+
+
+
+
